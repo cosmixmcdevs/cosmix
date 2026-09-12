@@ -3,6 +3,9 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const nodemailer = require('nodemailer');
+require('dotenv').config();
+
+const { supabaseAdmin, supabaseClient, supabaseUrl, supabaseAnonKey } = require('./supabase-config');
 
 const rootDir = __dirname;
 const host = process.env.HOST || '0.0.0.0';
@@ -1071,6 +1074,101 @@ async function startServer() {
 
     if (req.method === 'GET' && url.pathname === '/api/health') {
       sendJson(res, 200, { status: 'ok' });
+      return;
+    }
+
+    if (req.method === 'GET' && url.pathname === '/api/supabase-config') {
+      sendJson(res, 200, {
+        url: supabaseUrl,
+        anonKey: supabaseAnonKey,
+      });
+      return;
+    }
+
+    if (req.method === 'POST' && url.pathname === '/api/supabase/user/profile') {
+      try {
+        const authHeader = req.headers.authorization || '';
+        const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
+
+        if (!token) {
+          sendJson(res, 401, { error: 'Unauthorized' });
+          return;
+        }
+
+        // Verify token with Supabase
+        const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(token);
+
+        if (userError || !user) {
+          sendJson(res, 401, { error: 'Invalid token' });
+          return;
+        }
+
+        // Get or create user profile in custom users table
+        const { data: profile, error: getError } = await supabaseAdmin
+          .from('user_profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+
+        if (getError && getError.code !== 'PGRST116') {
+          throw getError;
+        }
+
+        const userProfile = profile || {
+          id: user.id,
+          email: user.email,
+          username: user.user_metadata?.username || user.email?.split('@')[0] || 'User',
+          avatar: user.user_metadata?.avatar || '',
+          role: 'member',
+          roles: [],
+          permissions: [],
+          created_at: new Date().toISOString(),
+        };
+
+        sendJson(res, 200, userProfile);
+      } catch (error) {
+        console.error('Error fetching user profile:', error);
+        sendJson(res, 500, { error: 'Failed to fetch profile' });
+      }
+      return;
+    }
+
+    if (req.method === 'PUT' && url.pathname === '/api/supabase/user/profile') {
+      try {
+        const authHeader = req.headers.authorization || '';
+        const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
+
+        if (!token) {
+          sendJson(res, 401, { error: 'Unauthorized' });
+          return;
+        }
+
+        const bodyText = await parseBody(req);
+        const updates = JSON.parse(bodyText);
+
+        const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(token);
+
+        if (userError || !user) {
+          sendJson(res, 401, { error: 'Invalid token' });
+          return;
+        }
+
+        const { data: profile, error: updateError } = await supabaseAdmin
+          .from('user_profiles')
+          .update({
+            ...updates,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', user.id)
+          .select();
+
+        if (updateError) throw updateError;
+
+        sendJson(res, 200, profile?.[0] || {});
+      } catch (error) {
+        console.error('Error updating user profile:', error);
+        sendJson(res, 500, { error: 'Failed to update profile' });
+      }
       return;
     }
 
