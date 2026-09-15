@@ -410,7 +410,7 @@ function sendHtml(res, statusCode, html, headers = {}) {
   res.end(html);
 }
 
-function buildAuthHtml(title, message, redirectPath = '/profile.html') {
+function buildAuthHtml(title, message, redirectPath = '/profile') {
   return `<!doctype html>
 <html lang="en">
   <head>
@@ -1305,7 +1305,7 @@ async function startServer() {
 
         setSessionCookie(res, sessionId);
         if (wantsHtml) {
-          sendHtml(res, 200, buildAuthHtml('Signed in', `Welcome, ${newUser.username}! Your account is ready.`, '/profile.html'));
+          sendHtml(res, 200, buildAuthHtml('Signed in', `Welcome, ${newUser.username}! Your account is ready.`, '/profile'));
         } else {
           sendJson(res, 200, { ok: true, user: buildSessionUser(newUser) });
         }
@@ -1356,7 +1356,7 @@ async function startServer() {
 
         setSessionCookie(res, sessionId);
         if (wantsHtml) {
-          sendHtml(res, 200, buildAuthHtml('Signed in', `Welcome back, ${user.username}!`, '/profile.html'));
+          sendHtml(res, 200, buildAuthHtml('Signed in', `Welcome back, ${user.username}!`, '/profile'));
         } else {
           sendJson(res, 200, { ok: true, user: buildSessionUser(user) });
         }

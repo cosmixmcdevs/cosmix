@@ -46,7 +46,7 @@
           <a class="button primary" href="ranks.html">Buy a Rank</a>
           <a class="button secondary" href="reports.html">Submit a Report</a>
           <a class="button secondary" href="eaglercraft/clients.html">Play on Eaglercraft</a>
-          <a id="hero-signup" class="button secondary" href="/profile.html?view=signup">Sign up</a>
+          <a id="hero-signup" class="button secondary" href="/profile?view=signup">Sign up</a>
         </div>
         <div class="server-info">
           <span>Server IP: mc.cosmixmc.org</span>
@@ -163,7 +163,7 @@
           const heroSignup = document.getElementById('hero-signup');
           if (heroSignup) {
             heroSignup.textContent = 'Profile';
-            heroSignup.href = '/profile.html';
+            heroSignup.href = '/profile';
           }
         } else {
           accountStatus.classList.remove('online');
@@ -172,7 +172,7 @@
           const heroSignup = document.getElementById('hero-signup');
           if (heroSignup) {
             heroSignup.textContent = 'Sign up';
-            heroSignup.href = '/profile.html?view=signup';
+            heroSignup.href = '/profile?view=signup';
           }
         }
 
