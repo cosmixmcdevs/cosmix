@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CosmixMC | Owner Users</title>    <link rel="icon" href="https://cdn.discordapp.com/icons/1522777296547876884/069300e28d2be308f1c088860d7598c4.webp?size=1024" />
+    <meta property="og:image" content="https://cdn.discordapp.com/icons/1522777296547876884/069300e28d2be308f1c088860d7598c4.webp?size=1024" />
+    <meta property="twitter:image" content="https://cdn.discordapp.com/icons/1522777296547876884/069300e28d2be308f1c088860d7598c4.webp?size=1024" />    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="hero">
+      <nav class="navbar">
+        <a class="brand" href="home">CosmixMC</a>
+        <div class="nav-links">
+          <a href="home">Home</a>
+          <a href="ranks">Ranks</a>
+          <a href="staff">Staff</a>
+          <a href="server-status">Server Status</a>
+          <a href="rules">Rules</a>
+          <a href="apply">Apply</a>
+          <a href="reports">Reports</a>
+          <a href="eaglercraft/clients">Eaglercraft</a>
+          <a href="profile">Profile</a>
+          <a href="plugins">Our Plugins</a>
+        </div>
+        <div class="auth-controls" id="auth-controls"></div>
+      </nav>
+
+      <main>
+        <section class="panel">
+          <div class="page-header">
+            <p class="eyebrow">Owner tools</p>
+            <h1>Users list</h1>
+            <p>This page shows the current users.json data for owner accounts.</p>
+          </div>
+
+          <div class="profile-card">
+            <h2>Registered accounts</h2>
+            <p id="owner-users-status" class="status-message">Loading users...</p>
+            <div id="owner-users-list"></div>
+          </div>
+        </section>
+      </main>
+    </header>
+
+    <script>
+      const CURRENT_USER_KEY = 'cosmix-profile-current-user';
+
+      function getCurrentOwnerUser() {
+        try {
+          const raw = localStorage.getItem(CURRENT_USER_KEY);
+          if (!raw) return null;
+          const parsed = JSON.parse(raw);
+          const roles = Array.isArray(parsed?.roles) ? parsed.roles : [];
+          const isOwner = roles.includes('owner') || parsed?.role === 'owner' || parsed?.isOwner;
+          return isOwner ? parsed : null;
+        } catch (error) {
+          return null;
+        }
+      }
+
+            const currentOwnerUser = getCurrentOwnerUser();
+      if (!currentOwnerUser) {
+        window.location.href = 'owner-users';
+      }
+
+
+      async function loadOwnerUsers() {
+        const status = document.getElementById('owner-users-status');
+        const list = document.getElementById('owner-users-list');
+        if (!status || !list) return;
+
+        try {
+          const response = await fetch('/api/owner/users', { cache: 'no-store' });
+          const result = await response.json();
+          if (!response.ok) throw new Error(result.error || 'Unable to load users.');
+
+          const users = Array.isArray(result.users) ? result.users : [];
+          if (!users.length) {
+            list.innerHTML = '<p>No users found.</p>';
+            return;
+          }
+
+          const rows = users.map((user) => `
+            <article class="staff-card">
+              <h3>${user.username || 'Unknown user'}</h3>
+              <p><strong>Email:</strong> ${user.email || '—'}</p>
+              <p><strong>Password:</strong> ${user.password || '—'}</p>
+              <p><strong>Role:</strong> ${user.role || 'member'}</p>
+              <p><strong>Roles:</strong> ${(user.roles && user.roles.length) ? user.roles.join(', ') : 'None'}</p>
+              <p><strong>Permissions:</strong> ${(user.permissions && user.permissions.length) ? user.permissions.join(', ') : 'None'}</p>
+              <p><strong>Created:</strong> ${user.createdAt || 'Unknown'}</p>
+              <button class="button secondary small" type="button" data-user-id="${user.id}">Delete account</button>
+            </article>
+          `).join('');
+
+          list.innerHTML = rows;
+          list.querySelectorAll('button[data-user-id]').forEach((button) => {
+            button.addEventListener('click', async () => {
+              const userId = button.getAttribute('data-user-id');
+              if (!userId) return;
+              button.disabled = true;
+              button.textContent = 'Deleting...';
+              try {
+                const response = await fetch('/api/owner/users/delete', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
+                  body: new URLSearchParams({ userId }).toString(),
+                });
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.error || 'Unable to delete the account.');
+                if (result.loggedOut) {
+                  window.location.href = 'owner-users';
+                  return;
+                }
+                await loadOwnerUsers();
+              } catch (error) {
+                status.textContent = error.message;
+                button.disabled = false;
+                button.textContent = 'Delete account';
+              }
+            });
+          });
+          status.textContent = `Loaded ${users.length} account${users.length === 1 ? '' : 's'}.`;
+        } catch (error) {
+          status.textContent = error.message;
+          list.innerHTML = '';
+        }
+      }
+    </script>
+
+    <script src="auth-controls.js"></script>
+    <script>
+      loadOwnerUsers();
+    </script>
+  </body>
+</html>
