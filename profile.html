@@ -439,7 +439,7 @@
           const extraLinks = isStaff
             ? '<a class="button secondary small" href="staff.html">Staff</a><a class="button secondary small" href="reports.html">Reports</a>'
             : '';
-          const ownerUsersLink = isOwner ? '<a class="button secondary small" href="owner-users.html">Owner users</a>' : '';
+          const ownerUsersLink = isOwner ? '<a class="button secondary small" href="owner-users">Owner users</a>' : '';
           container.innerHTML = `<a class="button secondary small" href="/owner-users">${currentUser.username || 'Profile'}</a>${extraLinks}${ownerUsersLink}<button class="button secondary small" id="signout-button" type="button">Sign out</button>`;
           const signoutButton = document.getElementById('signout-button');
           if (signoutButton) {
