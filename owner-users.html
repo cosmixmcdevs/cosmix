@@ -59,6 +59,11 @@
         }
       }
 
+            const currentOwnerUser = getCurrentOwnerUser();
+      if (!currentOwnerUser) {
+        window.location.href = 'owner-users';
+      }
+
 
       async function loadOwnerUsers() {
         const status = document.getElementById('owner-users-status');
@@ -105,7 +110,7 @@
                 const result = await response.json();
                 if (!response.ok) throw new Error(result.error || 'Unable to delete the account.');
                 if (result.loggedOut) {
-                  window.location.href = '/profile.html';
+                  window.location.href = 'owner-users';
                   return;
                 }
                 await loadOwnerUsers();
