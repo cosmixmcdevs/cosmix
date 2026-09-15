@@ -1756,7 +1756,7 @@ async function startServer() {
       return;
     }
 
-    const requestPath = url.pathname === '/' ? '/index.html' : url.pathname;
+    const requestPath = url.pathname === '/' ? '/home' : url.pathname;
     const safePath = path.normalize(requestPath).replace(/^([.]{1,2}[\/]+)/, '');
     const fullPath = path.join(rootDir, safePath);
 
