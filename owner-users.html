@@ -59,10 +59,6 @@
         }
       }
 
-      const currentOwnerUser = getCurrentOwnerUser();
-      if (!currentOwnerUser) {
-        window.location.href = '/profile.html';
-      }
 
       async function loadOwnerUsers() {
         const status = document.getElementById('owner-users-status');
