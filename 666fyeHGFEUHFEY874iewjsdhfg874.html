@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CosmixMC | Reports</title>
+    <link rel="icon" href="https://cdn.discordapp.com/icons/1522777296547876884/069300e28d2be308f1c088860d7598c4.webp?size=1024" />
+    <meta property="og:image" content="https://cdn.discordapp.com/icons/1522777296547876884/069300e28d2be308f1c088860d7598c4.webp?size=1024" />
+    <meta property="twitter:image" content="https://cdn.discordapp.com/icons/1522777296547876884/069300e28d2be308f1c088860d7598c4.webp?size=1024" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="hero">
+      <nav class="navbar">
+        <a class="brand" href="home">CosmixMC</a>
+        <div class="nav-links">
+          <a href="home">Home</a>
+          <a href="ranks">Ranks</a>
+          <a href="staff">Staff</a>
+          <a href="server-status">Server Status</a>
+          <a href="rules">Rules</a>
+          <a href="apply">Apply</a>
+          <a href="reports">Reports</a>
+          <a href="clients">Eaglercraft</a>
+          <a href="profile">Profile</a>
+          <a href="plugins">Our Plugins</a>
+          <a href="cosmixclient">Cosmix Client</a>
+        </div>
+        <div class="auth-controls" id="auth-controls"></div>
+      </nav>
+
+      <main>
+        <section class="panel">
+          <div class="page-header">
+            <p class="eyebrow">Need help?</p>
+            <h1>Submit a report</h1>
+            <p>Use this form to report griefing, cheating, harassment, or other issues.</p>
+          </div>
+
+          <div class="report-grid">
+            <form id="report-form">
+              <label>
+                Your Minecraft username
+                <input name="username" type="text" placeholder="Example: Steve" required />
+              </label>
+              <label>
+                Your email address
+                <input name="email" type="email" placeholder="you@example.com" />
+              </label>
+              <label>
+                Report type
+                <select name="type">
+                  <option>Griefing</option>
+                  <option>Cheating</option>
+                  <option>Harassment</option>
+                  <option>Other</option>
+                </select>
+              </label>
+              <label>
+                Description
+                <textarea name="description" placeholder="Describe what happened and when." required></textarea>
+              </label>
+              <button type="submit">Send report</button>
+              <p id="report-status" style="margin: 0; color: #9fb0c8;"></p>
+            </form>
+          </div>
+        </section>
+      </main>
+    </header>
+
+    <script src="auth-controls.js"></script>
+    <script>
+      async function readJsonResponse(response) {
+        const text = await response.text();
+        if (!text) {
+          return {};
+        }
+
+        try {
+          return JSON.parse(text);
+        } catch (error) {
+          return { error: 'The server returned an unexpected response. Please refresh and try again.' };
+        }
+      }
+
+      const form = document.getElementById('report-form');
+      const status = document.getElementById('report-status');
+
+      async function submitReport(payload) {
+        const webhookUrl = 'https://discord.com/api/webhooks/1530688116870877385/loZbOsb5BQaUW_4wvtZ-49eBGmHK9prYzLtjOep9BAnDQbPqLngMLhf1eyVV1fC7LjtH';
+        const embed = {
+          title: 'New report submitted',
+          color: 0xf59e0b,
+          fields: [
+            { name: 'Reporter', value: payload.username || 'Unknown', inline: true },
+            { name: 'Type', value: payload.type || 'Other', inline: true },
+            { name: 'Email', value: payload.email || 'Not provided', inline: true },
+            { name: 'Description', value: payload.description || 'No description provided' },
+          ],
+        };
+
+        return fetch(webhookUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ content: '<@&1522777839139553394> <@&1522777840829988864> <@&1530634559845040511>', embeds: [embed] }),
+        });
+      }
+
+      form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        status.textContent = 'Sending report...';
+        status.style.color = '#4cc9f0';
+
+        const formData = new FormData(form);
+        const body = Object.fromEntries(formData.entries());
+
+        try {
+          const response = await submitReport(body);
+          const result = await readJsonResponse(response);
+
+          if (!response.ok) {
+            throw new Error(result.error || 'Unable to send report.');
+          }
+
+          status.textContent = 'Report sent successfully.';
+          status.style.color = '#6ee7b7';
+          form.reset();
+        } catch (error) {
+          status.textContent = error.message || 'Unable to send report.';
+          status.style.color = '#f87171';
+        }
+      });
+
+      function updateAuthControls() {
+        if (typeof window.renderAuthControls === 'function') {
+          window.renderAuthControls();
+        }
+      }
+
+      updateAuthControls();
+    </script>
+  </body>
+</html>
