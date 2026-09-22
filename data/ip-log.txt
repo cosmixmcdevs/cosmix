@@ -1,3 +1,33 @@
 
 2026-09-12T20:00:28.232Z ip=70.178.111.82 path=/ ua=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36 Edg/153.0.0.0
 2026-09-12T20:00:40.921Z ip=70.178.111.82 path=/ ua=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36 Edg/153.0.0.0
+2026-09-20T17:39:20.469Z ip=127.0.0.1 path=/api/ai-chat ua=node
+2026-09-20T17:39:20.481Z ip=127.0.0.1 path=/.env ua=node
+2026-09-20T17:39:28.866Z ip=127.0.0.1 path=/api/ai-chat ua=node
+2026-09-20T17:39:28.880Z ip=127.0.0.1 path=/.env ua=node
+2026-09-20T17:39:28.885Z ip=127.0.0.1 path=/api/ai-chat ua=node
+2026-09-20T17:39:54.446Z ip=127.0.0.1 path=/ai-chat.html ua=node
+2026-09-20T17:40:02.610Z ip=127.0.0.1 path=/api/auth/signup ua=node
+2026-09-20T17:40:02.628Z ip=127.0.0.1 path=/api/auth/signup ua=node
+2026-09-20T17:40:02.636Z ip=127.0.0.1 path=/api/auth/login ua=node
+2026-09-20T17:40:02.673Z ip=127.0.0.1 path=/api/report ua=node
+2026-09-20T17:40:02.701Z ip=127.0.0.1 path=/api/auth/signup ua=node
+2026-09-20T17:40:02.707Z ip=127.0.0.1 path=/api/profile ua=node
+2026-09-20T17:40:02.719Z ip=127.0.0.1 path=/api/report ua=node
+2026-09-20T17:40:02.726Z ip=127.0.0.1 path=/api/not-a-real-route ua=node
+2026-09-20T17:42:58.563Z ip=127.0.0.1 path=/api/auth/signup ua=node
+2026-09-20T17:42:58.641Z ip=127.0.0.1 path=/api/auth/signup ua=node
+2026-09-20T17:42:58.650Z ip=127.0.0.1 path=/api/auth/login ua=node
+2026-09-20T17:42:58.682Z ip=127.0.0.1 path=/api/report ua=node
+2026-09-20T17:42:58.730Z ip=127.0.0.1 path=/api/auth/signup ua=node
+2026-09-20T17:42:58.741Z ip=127.0.0.1 path=/api/profile ua=node
+2026-09-20T17:42:58.747Z ip=127.0.0.1 path=/api/report ua=node
+2026-09-20T17:42:58.857Z ip=127.0.0.1 path=/api/not-a-real-route ua=node
+2026-09-20T17:43:05.473Z ip=127.0.0.1 path=/api/auth/signup ua=node
+2026-09-20T17:43:05.570Z ip=127.0.0.1 path=/api/auth/signup ua=node
+2026-09-20T17:43:05.592Z ip=127.0.0.1 path=/api/auth/login ua=node
+2026-09-20T17:43:05.680Z ip=127.0.0.1 path=/api/report ua=node
+2026-09-20T17:43:05.741Z ip=127.0.0.1 path=/api/auth/signup ua=node
+2026-09-20T17:43:05.749Z ip=127.0.0.1 path=/api/profile ua=node
+2026-09-20T17:43:05.756Z ip=127.0.0.1 path=/api/report ua=node
+2026-09-20T17:43:05.763Z ip=127.0.0.1 path=/api/not-a-real-route ua=node

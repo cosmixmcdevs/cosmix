@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CosmixMC | Voidhaven AI</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="hero">
+      <nav class="navbar">
+        <a class="brand" href="home">CosmixMC</a>
+        <div class="nav-links">
+          <a href="home">Home</a>
+          <a href="ranks">Ranks</a>
+          <a href="staff">Staff</a>
+          <a href="server-status">Server Status</a>
+          <a href="rules">Rules</a>
+          <a href="apply">Apply</a>
+          <a href="reports">Reports</a>
+          <a href="clients">Eaglercraft</a>
+          <a href="profile">Profile</a>
+          <a href="plugins">Our Plugins</a>
+          <a href="cosmixclient">Cosmix Client</a>
+          <a href="ai-chat">AI Chat</a>
+        </div>
+        <div class="auth-controls" id="auth-controls"></div>
+      </nav>
+
+      <main>
+        <section class="panel ai-chat-panel">
+          <div class="page-header">
+            <p class="eyebrow">Voidhaven AI</p>
+            <h1>Ask anything.</h1>
+            <p>A private Groq-powered assistant for questions, ideas, and quick help.</p>
+          </div>
+
+          <div class="ai-chat-window" id="chat-messages" aria-live="polite">
+            <div class="ai-message assistant-message">
+              <strong>Cosmix AI, Powered by Voidhaven AI</strong>
+              <p>Hey. What are you working on?</p>
+            </div>
+          </div>
+
+          <form id="ai-chat-form" class="ai-chat-form">
+            <label for="ai-chat-input">Message</label>
+            <div class="ai-chat-composer">
+              <textarea id="ai-chat-input" rows="2" maxlength="4000" placeholder="Ask Voidhaven AI..." required></textarea>
+              <button type="submit" id="ai-chat-submit">Send</button>
+            </div>
+            <p id="ai-chat-status" class="status-message" role="status"></p>
+          </form>
+        </section>
+      </main>
+    </header>
+
+    <script src="auth-controls.js"></script>
+    <script>
+      const form = document.getElementById('ai-chat-form');
+      const input = document.getElementById('ai-chat-input');
+      const submit = document.getElementById('ai-chat-submit');
+      const status = document.getElementById('ai-chat-status');
+      const messagesElement = document.getElementById('chat-messages');
+      const messages = [];
+
+      function appendMessage(role, text) {
+        const message = document.createElement('div');
+        message.className = `ai-message ${role}-message`;
+        const heading = document.createElement('strong');
+        heading.textContent = role === 'user' ? 'You' : 'Voidhaven AI';
+        const paragraph = document.createElement('p');
+        paragraph.textContent = text;
+        message.append(heading, paragraph);
+        messagesElement.appendChild(message);
+        messagesElement.scrollTop = messagesElement.scrollHeight;
+      }
+
+      function addTypingIndicator() {
+        const indicator = document.createElement('div');
+        indicator.className = 'ai-message assistant-message ai-typing-indicator';
+        indicator.setAttribute('role', 'status');
+        indicator.setAttribute('aria-label', 'Voidhaven AI is thinking');
+        indicator.innerHTML = '<strong>Voidhaven AI</strong><span class="typing-dots" aria-hidden="true"><span>.</span><span>.</span><span>.</span></span>';
+        messagesElement.appendChild(indicator);
+        messagesElement.scrollTop = messagesElement.scrollHeight;
+        return indicator;
+      }
+
+      form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const content = input.value.trim();
+        if (!content) return;
+
+        messages.push({ role: 'user', content });
+        appendMessage('user', content);
+        input.value = '';
+        input.disabled = true;
+        submit.disabled = true;
+        status.textContent = '';
+        const typingIndicator = addTypingIndicator();
+
+        try {
+          const response = await fetch('/api/ai-chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ messages }),
+          });
+          const result = await response.json();
+          if (!response.ok) throw new Error(result.error || 'The AI chat is unavailable.');
+          typingIndicator.remove();
+          messages.push({ role: 'assistant', content: result.reply });
+          appendMessage('assistant', result.reply);
+        } catch (error) {
+          typingIndicator.remove();
+          messages.pop();
+          status.textContent = error.message;
+        } finally {
+          input.disabled = false;
+          submit.disabled = false;
+          input.focus();
+        }
+      });
+    </script>
+  </body>
+</html>
