@@ -39,3 +39,5 @@
 2026-10-01T23:13:25.513Z ip=127.0.0.1 path=/api/profile ua=node
 2026-10-01T23:13:25.517Z ip=127.0.0.1 path=/api/report ua=node
 2026-10-01T23:13:25.544Z ip=127.0.0.1 path=/api/not-a-real-route ua=node
+2026-10-01T23:50:18.754Z ip=127.0.0.1 path=/api/ai-chat ua=node
+2026-10-01T23:50:38.081Z ip=127.0.0.1 path=/api/health ua=curl/8.5.0

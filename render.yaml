@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: cosmixmc
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: GROQ_API_KEY
+        sync: false
+      - key: GROQ_MODEL
+        value: openai/gpt-oss-120b
+      - key: HOMEPAGE_REDIRECT_URL
+        value: /home
