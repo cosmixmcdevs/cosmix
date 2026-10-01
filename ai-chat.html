@@ -37,8 +37,8 @@
 
           <div class="ai-chat-window" id="chat-messages" aria-live="polite">
             <div class="ai-message assistant-message">
-              <strong>Cosmix AI</strong>
-              <p>Hello, <r>(failed to get user's username)</r>! How may I help you?</p>
+              <strong>Cosmix AI, Powered by Voidhaven AI</strong>
+              <p id="ai-chat-greeting">Hey. What are you working on?</p>
             </div>
           </div>
 
@@ -62,6 +62,11 @@
       const status = document.getElementById('ai-chat-status');
       const messagesElement = document.getElementById('chat-messages');
       const messages = [];
+      const currentUser = window.getCurrentUser?.();
+      const greeting = document.getElementById('ai-chat-greeting');
+      if (currentUser?.username && greeting) {
+        greeting.textContent = `Hey, ${currentUser.username}. What are you working on?`;
+      }
 
       function appendMessage(role, text) {
         const message = document.createElement('div');

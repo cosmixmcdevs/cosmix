@@ -214,7 +214,7 @@ function buildSessionUser(user) {
 function serializeUserForOwnerList(user) {
   return {
     id: user.id,
-    username: user.username,
+    username: user.username || user.email?.split('@')[0] || 'CosmixUser',
     email: user.email,
     role: user.role || 'member',
     roles: Array.isArray(user.roles) ? user.roles : [],

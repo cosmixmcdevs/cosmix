@@ -5,7 +5,7 @@ const os = require('node:os');
 const path = require('node:path');
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { buildAccountDeletionDiscordPayload, buildApplicationCommandDefinitions, buildApplicationDiscordPayload, buildDiscordEmbed, buildDiscordPayload, buildReportLogPayload, buildTranscript, buildDiscordAuthHeader, parseDiscordResponse, parsePermissions, getDiscordConfig, buildDiscordWebhookPayload, normalizeSignupPayload, startServer, getMinecraftServerStatus, logVisitorIp, loadVpnIps } = require('../server'); 
+const { buildAccountDeletionDiscordPayload, buildApplicationCommandDefinitions, buildApplicationDiscordPayload, buildDiscordEmbed, buildDiscordPayload, buildReportLogPayload, buildTranscript, buildDiscordAuthHeader, parseDiscordResponse, parsePermissions, getDiscordConfig, buildDiscordWebhookPayload, normalizeSignupPayload, serializeUserForOwnerList, startServer, getMinecraftServerStatus, logVisitorIp, loadVpnIps } = require('../server'); 
 
 test('normalizeSignupPayload allows signing up without an email', () => {
   const payload = normalizeSignupPayload({ username: 'GuestUser', password: 'secret' });
@@ -13,6 +13,12 @@ test('normalizeSignupPayload allows signing up without an email', () => {
   assert.equal(payload.email, '');
   assert.equal(payload.username, 'GuestUser');
   assert.equal(payload.password, 'secret');
+});
+
+test('owner user serialization derives a username from email when missing', () => {
+  const user = serializeUserForOwnerList({ id: 'user-1', email: 'steve@example.com' });
+
+  assert.equal(user.username, 'steve');
 });
 
 test('getMinecraftServerStatus returns online player counts and limits', async () => {
