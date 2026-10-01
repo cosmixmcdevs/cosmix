@@ -86,6 +86,18 @@
         return indicator;
       }
 
+      async function readJsonResponse(response) {
+        const text = await response.text();
+        try {
+          return text ? JSON.parse(text) : {};
+        } catch (error) {
+          if (response.headers.get('content-type')?.includes('text/html') || text.trimStart().startsWith('<')) {
+            throw new Error('The AI chat API returned an HTML page instead of JSON. Deploy the Node.js server with /api/ai-chat enabled and GROQ_API_KEY configured.');
+          }
+          throw new Error('The AI chat API returned an invalid response. Please try again later.');
+        }
+      }
+
       form.addEventListener('submit', async (event) => {
         event.preventDefault();
         const content = input.value.trim();
@@ -102,10 +114,10 @@
         try {
           const response = await fetch('/api/ai-chat', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
             body: JSON.stringify({ messages }),
           });
-          const result = await response.json();
+          const result = await readJsonResponse(response);
           if (!response.ok) throw new Error(result.error || 'The AI chat is unavailable.');
           typingIndicator.remove();
           messages.push({ role: 'assistant', content: result.reply });
