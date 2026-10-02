@@ -37,7 +37,7 @@
 
           <div class="ai-chat-window" id="chat-messages" aria-live="polite">
             <div class="ai-message assistant-message">
-              <strong>Cosmix AI, Powered by Voidhaven AI</strong>
+              <strong>Cosmix AI</strong>
               <p id="ai-chat-greeting">Hey. What are you working on?</p>
             </div>
           </div>
@@ -70,7 +70,7 @@
       const currentUser = window.getCurrentUser?.();
       const greeting = document.getElementById('ai-chat-greeting');
       if (currentUser?.username && greeting) {
-        greeting.textContent = `Hey, ${currentUser.username}. What are you working on?`;
+        greeting.textContent = `Hey, ${currentUser.username}, my name is CosmixAI. Ask me anything. I know everything. I can help you with your questions, ideas, and quick help. Just ask!`;
       }
 
       function appendMessage(role, text) {
@@ -89,7 +89,7 @@
         const indicator = document.createElement('div');
         indicator.className = 'ai-message assistant-message ai-typing-indicator';
         indicator.setAttribute('role', 'status');
-        indicator.setAttribute('aria-label', 'Voidhaven AI is thinking');
+        indicator.setAttribute('aria-label', 'CosmixAI is thinking');
         indicator.innerHTML = '<strong>Voidhaven AI</strong><span class="typing-dots" aria-hidden="true"><span>.</span><span>.</span><span>.</span></span>';
         messagesElement.appendChild(indicator);
         messagesElement.scrollTop = messagesElement.scrollHeight;
