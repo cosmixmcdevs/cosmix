@@ -99,6 +99,59 @@ test('signup returns a session cookie so the browser stays signed in', async () 
   }
 });
 
+test('AI chat API allows preflight requests from the website domain', async () => {
+  const server = await startServer();
+  const address = server.address();
+  const baseUrl = `http://127.0.0.1:${address.port}`;
+  const originalFetch = global.fetch;
+  const previousApiKey = process.env.GROQ_API_KEY;
+
+  try {
+    const preflightResponse = await originalFetch(`${baseUrl}/api/ai-chat`, {
+      method: 'OPTIONS',
+      headers: {
+        Origin: 'https://cosmixmc.org',
+        'Access-Control-Request-Method': 'POST',
+        'Access-Control-Request-Headers': 'content-type',
+      },
+    });
+
+    assert.equal(preflightResponse.status, 204);
+    assert.equal(preflightResponse.headers.get('access-control-allow-origin'), 'https://cosmixmc.org');
+    assert.equal(preflightResponse.headers.get('access-control-allow-methods'), 'POST, OPTIONS');
+
+    process.env.GROQ_API_KEY = 'test-groq-key';
+    global.fetch = async () => new Response(JSON.stringify({
+      choices: [{ message: { content: 'Hello back.' } }],
+    }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
+    const response = await originalFetch(`${baseUrl}/api/ai-chat`, {
+      method: 'POST',
+      headers: {
+        Origin: 'https://cosmixmc.org',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ messages: [{ role: 'user', content: 'Hello.' }] }),
+    });
+
+    assert.equal(response.status, 200);
+    assert.equal(response.headers.get('access-control-allow-origin'), 'https://cosmixmc.org');
+    assert.deepEqual(await response.json(), { reply: 'Hello back.' });
+  } finally {
+    global.fetch = originalFetch;
+    if (previousApiKey === undefined) {
+      delete process.env.GROQ_API_KEY;
+    } else {
+      process.env.GROQ_API_KEY = previousApiKey;
+    }
+    await new Promise((resolve, reject) => {
+      server.close((error) => (error ? reject(error) : resolve()));
+    });
+  }
+});
+
 test('browser auth requests receive an HTML page instead of JSON', async () => {
   const server = await startServer();
   const address = server.address();

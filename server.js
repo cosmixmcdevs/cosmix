@@ -1129,6 +1129,30 @@ async function startServer() {
       return;
     }
 
+    if (url.pathname === '/api/ai-chat') {
+      const origin = req.headers.origin || '';
+      const allowedOrigins = ['https://cosmixmc.org', 'https://www.cosmixmc.org'];
+      if (allowedOrigins.includes(origin)) {
+        res.setHeader('Access-Control-Allow-Origin', origin);
+        res.setHeader('Vary', 'Origin');
+      }
+
+      if (req.method === 'OPTIONS') {
+        if (!allowedOrigins.includes(origin)) {
+          sendJson(res, 403, { error: 'Origin not allowed.' });
+          return;
+        }
+
+        res.writeHead(204, {
+          'Access-Control-Allow-Methods': 'POST, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type',
+          'Access-Control-Max-Age': '600',
+        });
+        res.end();
+        return;
+      }
+    }
+
     if (req.method === 'POST' && url.pathname === '/api/ai-chat') {
       try {
         const body = JSON.parse(await parseBody(req) || '{}');

@@ -62,6 +62,11 @@
       const status = document.getElementById('ai-chat-status');
       const messagesElement = document.getElementById('chat-messages');
       const messages = [];
+      const apiOrigin = window.COSMIX_API_ORIGIN || (
+        ['cosmixmc.org', 'www.cosmixmc.org'].includes(window.location.hostname)
+          ? 'https://cosmixmc.onrender.com'
+          : ''
+      );
       const currentUser = window.getCurrentUser?.();
       const greeting = document.getElementById('ai-chat-greeting');
       if (currentUser?.username && greeting) {
@@ -97,7 +102,7 @@
           return text ? JSON.parse(text) : {};
         } catch (error) {
           if (response.headers.get('content-type')?.includes('text/html') || text.trimStart().startsWith('<')) {
-            throw new Error('The AI chat API returned an HTML page instead of JSON. Deploy the Node.js server with /api/ai-chat enabled and API_KEY configured.');
+            throw new Error('The AI chat service returned an HTML page instead of JSON. Check that the Node.js API service is running.');
           }
           throw new Error('The AI chat API returned an invalid response. Please try again later.');
         }
@@ -117,7 +122,7 @@
         const typingIndicator = addTypingIndicator();
 
         try {
-          const response = await fetch('/api/ai-chat', {
+          const response = await fetch(`${apiOrigin}/api/ai-chat`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
             body: JSON.stringify({ messages }),
