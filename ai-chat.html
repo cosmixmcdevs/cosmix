@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>CosmixMC | Voidhaven AI</title>
+    <title>CosmixMC | AI Chat</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
@@ -97,7 +97,7 @@
           return text ? JSON.parse(text) : {};
         } catch (error) {
           if (response.headers.get('content-type')?.includes('text/html') || text.trimStart().startsWith('<')) {
-            throw new Error('The AI chat API returned an HTML page instead of JSON. Deploy the Node.js server with /api/ai-chat enabled and GROQ_API_KEY configured.');
+            throw new Error('The AI chat API returned an HTML page instead of JSON. Deploy the Node.js server with /api/ai-chat enabled and API_KEY configured.');
           }
           throw new Error('The AI chat API returned an invalid response. Please try again later.');
         }
