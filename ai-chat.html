@@ -37,7 +37,7 @@
 
           <div class="ai-chat-window" id="chat-messages" aria-live="polite">
             <div class="ai-message assistant-message">
-              <strong>Cosmix AI</strong>
+              <strong>CosmixAI</strong>
               <p id="ai-chat-greeting">Hey. What are you working on?</p>
             </div>
           </div>
@@ -74,7 +74,7 @@
         const message = document.createElement('div');
         message.className = `ai-message ${role}-message`;
         const heading = document.createElement('strong');
-        heading.textContent = role === 'user' ? 'You' : 'Voidhaven AI';
+        heading.textContent = role === 'user' ? 'You' : 'CosmixAI';
         const paragraph = document.createElement('p');
         paragraph.textContent = text;
         message.append(heading, paragraph);
@@ -87,7 +87,7 @@
         indicator.className = 'ai-message assistant-message ai-typing-indicator';
         indicator.setAttribute('role', 'status');
         indicator.setAttribute('aria-label', 'CosmixAI is thinking');
-        indicator.innerHTML = '<strong>Voidhaven AI</strong><span class="typing-dots" aria-hidden="true"><span>.</span><span>.</span><span>.</span></span>';
+        indicator.innerHTML = '<strong>CosmixAI</strong><span class="typing-dots" aria-hidden="true"><span>.</span><span>.</span><span>.</span></span>';
         messagesElement.appendChild(indicator);
         messagesElement.scrollTop = messagesElement.scrollHeight;
         return indicator;
