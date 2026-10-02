@@ -105,10 +105,19 @@
         }
       }
 
+      input.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' && !event.shiftKey) {
+          event.preventDefault();
+          if (!submit.disabled) form.requestSubmit();
+        }
+      });
+
       form.addEventListener('submit', async (event) => {
         event.preventDefault();
         const content = input.value.trim();
         if (!content) return;
+        const requestStartedAt = Date.now();
+        const thinkingDuration = 3000 + Math.random() * 5000;
 
         messages.push({ role: 'user', content });
         appendMessage('user', content);
@@ -135,6 +144,10 @@
           });
           const result = await readJsonResponse(response);
           if (!response.ok) throw new Error(result.error || 'The AI chat is unavailable.');
+          const remainingThinkTime = thinkingDuration - (Date.now() - requestStartedAt);
+          if (remainingThinkTime > 0) {
+            await new Promise((resolve) => setTimeout(resolve, remainingThinkTime));
+          }
           typingIndicator.remove();
           messages.push({ role: 'assistant', content: result.reply });
           appendMessage('assistant', result.reply);
