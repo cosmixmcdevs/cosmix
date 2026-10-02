@@ -97,6 +97,25 @@ To enable email-based sign-ups and password resets:
 3. Try creating a new account using the sign-up form
 4. You should see Supabase authentication working
 
+## AI Chat Without Render
+
+The static site is hosted on GitHub Pages, so it cannot run the Node API. AI chat uses a Supabase Edge Function instead.
+
+1. Create a Supabase project and copy its Project URL and anon public key from **Settings** → **API**.
+2. Put those public values in `supabase-public-config.js`. Never put the Groq key in this file.
+3. Install the Supabase CLI, authenticate, and link this repository to the project:
+   ```bash
+   npx supabase login
+   npx supabase link --project-ref YOUR_PROJECT_REF
+   ```
+4. Add `GROQ_API_KEY` as an Edge Function secret in the Supabase dashboard, or run `npx supabase secrets set GROQ_API_KEY=YOUR_GROQ_API_KEY`. Optionally set `GROQ_MODEL` the same way.
+5. Deploy the function:
+   ```bash
+   npx supabase functions deploy ai-chat
+   ```
+
+The function URL is `YOUR_PROJECT_URL/functions/v1/ai-chat`. The config disables JWT verification because the public website does not require sign-in; the function restricts browser origins and validates messages. Apply rate limits in Supabase or an upstream gateway before broad public use.
+
 ## File Structure
 
 - **supabase-config.js** - Server-side Supabase configuration

@@ -55,6 +55,7 @@
     </header>
 
     <script src="auth-controls.js"></script>
+  <script src="supabase-public-config.js"></script>
     <script>
       const form = document.getElementById('ai-chat-form');
       const input = document.getElementById('ai-chat-input');
@@ -62,11 +63,7 @@
       const status = document.getElementById('ai-chat-status');
       const messagesElement = document.getElementById('chat-messages');
       const messages = [];
-      const apiOrigin = window.COSMIX_API_ORIGIN || (
-        ['cosmixmc.org', 'www.cosmixmc.org'].includes(window.location.hostname)
-          ? 'https://cosmixmc.onrender.com'
-          : ''
-      );
+      const supabaseConfig = window.COSMIX_SUPABASE_CONFIG || {};
       const currentUser = window.getCurrentUser?.();
       const greeting = document.getElementById('ai-chat-greeting');
       if (currentUser?.username && greeting) {
@@ -122,9 +119,18 @@
         const typingIndicator = addTypingIndicator();
 
         try {
-          const response = await fetch(`${apiOrigin}/api/ai-chat`, {
+          if (!supabaseConfig.url || !supabaseConfig.anonKey) {
+            throw new Error('AI chat needs a Supabase project URL and anon key in supabase-public-config.js.');
+          }
+
+          const response = await fetch(`${supabaseConfig.url.replace(/\/$/, '')}/functions/v1/ai-chat`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+            headers: {
+              'Content-Type': 'application/json',
+              Accept: 'application/json',
+              apikey: supabaseConfig.anonKey,
+              Authorization: `Bearer ${supabaseConfig.anonKey}`,
+            },
             body: JSON.stringify({ messages }),
           });
           const result = await readJsonResponse(response);
