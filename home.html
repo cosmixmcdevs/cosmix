@@ -143,20 +143,11 @@
         }
       }
 
-      function getCurrentUserFromStorage() {
-        try {
-          const raw = localStorage.getItem('cosmix-profile-current-user');
-          return raw ? JSON.parse(raw) : null;
-        } catch (error) {
-          return null;
-        }
-      }
-
       async function updateAccountStatus() {
         const accountStatus = document.getElementById('account-status');
         if (!accountStatus) return;
 
-        const currentUser = getCurrentUserFromStorage();
+        const currentUser = window.getCurrentUser?.();
         if (currentUser) {
           const displayName = currentUser.username ? `Signed in as ${currentUser.username}` : 'Signed in';
           accountStatus.classList.add('online');
@@ -185,6 +176,7 @@
 
       updateReportBotStatus();
       updateAccountStatus();
+      window.addEventListener('cosmix-auth-state-changed', updateAccountStatus);
       setInterval(updateReportBotStatus, 15000);
     </script>
   </body>

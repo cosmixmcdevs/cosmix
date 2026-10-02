@@ -1,164 +1,69 @@
-// Supabase client-side initialization
-// This file provides authentication functions for the browser
-
 (function () {
-  // These values will be populated from the server
-  window.SUPABASE_CONFIG = {
-    url: null,
-    anonKey: null,
-  };
+  let client;
 
-  // Initialize Supabase client
-  function initializeSupabase() {
-    if (!window.SUPABASE_CONFIG.url || !window.SUPABASE_CONFIG.anonKey) {
-      console.error('Supabase configuration not loaded');
-      return null;
+  function getClient() {
+    if (client) return client;
+
+    const config = window.COSMIX_SUPABASE_CONFIG || {};
+    if (!config.url || !config.anonKey || !window.supabase?.createClient) {
+      throw new Error('Supabase Auth is unavailable. Check the public project config and try again.');
     }
 
-    if (window.supabase && window.supabase.createClient) {
-      return window.supabase.createClient(
-        window.SUPABASE_CONFIG.url,
-        window.SUPABASE_CONFIG.anonKey,
-        {
-          auth: {
-            autoRefreshToken: true,
-            persistSession: true,
-          },
-        }
-      );
-    }
-    return null;
+    client = window.supabase.createClient(config.url, config.anonKey, {
+      auth: {
+        autoRefreshToken: true,
+        persistSession: true,
+        detectSessionInUrl: true,
+      },
+    });
+    return client;
   }
 
-  // Export functions
-  window.SupabaseAuth = {
-    // Sign up with email and password
-    async signUp(email, password, userData = {}) {
-      const supabase = initializeSupabase();
-      if (!supabase) throw new Error('Supabase not initialized');
+  function unwrap(result) {
+    if (result.error) throw result.error;
+    return result.data;
+  }
 
-      const { data, error } = await supabase.auth.signUp({
+  window.SupabaseAuth = {
+    async signUp(email, password, userData = {}) {
+      return unwrap(await getClient().auth.signUp({
         email,
         password,
         options: {
           data: userData,
+          emailRedirectTo: `${window.location.origin}/profile.html`,
         },
-      });
-
-      if (error) throw error;
-      return data;
+      }));
     },
 
-    // Sign in with email and password
     async signIn(email, password) {
-      const supabase = initializeSupabase();
-      if (!supabase) throw new Error('Supabase not initialized');
-
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (error) throw error;
-      return data;
+      return unwrap(await getClient().auth.signInWithPassword({ email, password }));
     },
 
-    // Sign out
     async signOut() {
-      const supabase = initializeSupabase();
-      if (!supabase) throw new Error('Supabase not initialized');
-
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
+      unwrap(await getClient().auth.signOut());
     },
 
-    // Get current session
     async getSession() {
-      const supabase = initializeSupabase();
-      if (!supabase) throw new Error('Supabase not initialized');
-
-      const { data, error } = await supabase.auth.getSession();
-      if (error) throw error;
-      return data.session;
+      return unwrap(await getClient().auth.getSession()).session;
     },
 
-    // Get current user
     async getUser() {
-      const supabase = initializeSupabase();
-      if (!supabase) throw new Error('Supabase not initialized');
-
-      const { data, error } = await supabase.auth.getUser();
-      if (error) throw error;
-      return data.user;
+      return unwrap(await getClient().auth.getUser()).user;
     },
 
-    // Update user profile
-    async updateProfile(updates) {
-      const supabase = initializeSupabase();
-      if (!supabase) throw new Error('Supabase not initialized');
-
-      const { data, error } = await supabase.auth.updateUser({
-        data: updates,
-      });
-
-      if (error) throw error;
-      return data;
+    async updateUser(updates) {
+      return unwrap(await getClient().auth.updateUser(updates));
     },
 
-    // Reset password
     async resetPassword(email) {
-      const supabase = initializeSupabase();
-      if (!supabase) throw new Error('Supabase not initialized');
-
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: window.location.origin + '/reset-password.html',
-      });
-
-      if (error) throw error;
+      unwrap(await getClient().auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/profile.html?view=recovery`,
+      }));
     },
 
-    // Update password
-    async updatePassword(newPassword) {
-      const supabase = initializeSupabase();
-      if (!supabase) throw new Error('Supabase not initialized');
-
-      const { error } = await supabase.auth.updateUser({
-        password: newPassword,
-      });
-
-      if (error) throw error;
-    },
-
-    // Listen to auth changes
     onAuthStateChange(callback) {
-      const supabase = initializeSupabase();
-      if (!supabase) {
-        console.error('Supabase not initialized');
-        return;
-      }
-
-      return supabase.auth.onAuthStateChange(callback);
+      return getClient().auth.onAuthStateChange(callback);
     },
   };
-
-  // Load Supabase config from server
-  async function loadSupabaseConfig() {
-    try {
-      const response = await fetch('/api/supabase-config');
-      if (response.ok) {
-        const config = await response.json();
-        window.SUPABASE_CONFIG.url = config.url;
-        window.SUPABASE_CONFIG.anonKey = config.anonKey;
-      }
-    } catch (error) {
-      console.error('Failed to load Supabase config:', error);
-    }
-  }
-
-  // Initialize when DOM is ready
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', loadSupabaseConfig);
-  } else {
-    loadSupabaseConfig();
-  }
 })();

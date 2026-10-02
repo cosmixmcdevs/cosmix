@@ -78,13 +78,17 @@ Add the Supabase client scripts to any HTML files that need authentication. Add 
 <script src="/auth-controls.js"></script>
 ```
 
-## Step 7: Configure Email Authentication (Optional)
+## Step 7: Configure Email Authentication
 
-To enable email-based sign-ups and password resets:
+Email authentication is required for website accounts:
 
-1. In Supabase, go to **Authentication** → **Providers**
-2. Make sure **Email** is enabled
-3. Configure email templates if needed
+1. In Supabase, go to **Authentication** → **Providers** and enable **Email**.
+2. Under **Authentication** → **URL Configuration**, set the Site URL to `https://cosmixmc.org` and add `https://cosmixmc.org/profile.html` to the redirect URLs.
+3. Configure email confirmation and templates as desired. When confirmation is enabled, new users must verify their email before signing in.
+
+## Website Account Storage
+
+Website signup, sign-in, email/password changes, and profile metadata use Supabase Auth. Passwords are stored and verified by Supabase, not in browser local storage. The database trigger in `supabase-schema.sql` creates a `user_profiles` row for each new Auth user. Accounts created by the previous local-storage or Node-server system are not automatically migrated; users need to register in Supabase with their email again.
 
 ## Step 8: Test the Integration
 

@@ -35,7 +35,7 @@
           <div class="page-header">
             <p class="eyebrow">Account center</p>
             <h1>Profile and sign in</h1>
-            <p>Sign up with an email, update your display name, and upload a profile picture for your account and Discord webhook identity.</p>
+            <p>Create an account with email and password, then manage your display name and profile picture.</p>
           </div>
 
           <div class="profile-grid">
@@ -45,7 +45,7 @@
                 <input id="auth-mode" type="hidden" name="mode" value="login" />
                 <label>
                   Email
-                  <input name="email" type="email" placeholder="you@example.com" />
+                  <input name="email" type="email" placeholder="you@example.com" required />
                 </label>
                 <label id="username-field" style="display:none;">
                   Username
@@ -71,7 +71,7 @@
                 </label>
                 <label>
                   Email
-                  <input name="email" id="profile-email" type="email" />
+                  <input name="email" id="profile-email" type="email" required />
                 </label>
                 <label>
                   Profile picture
@@ -110,8 +110,6 @@
       const deleteRequestButton = document.getElementById('request-delete-button');
       const profilePicturePreview = document.getElementById('profile-picture-preview');
       const authCard = document.getElementById('auth-card');
-      const STORAGE_KEY = 'cosmix-profile-users';
-      const CURRENT_USER_KEY = 'cosmix-profile-current-user';
       const DELETE_REQUEST_WEBHOOK_URL = 'https://discord.com/api/webhooks/1535316303449956416/7r2TqtW6BwAhBzoWW58sKqXJ8Z8PdNbPokwvS0taF1I7FujuH0HHt8-A8pQoyUMbknWO';
 
       async function sendDeletionRequestToDiscord(user, reason) {
@@ -154,8 +152,8 @@
         const usernameInput = usernameField.querySelector('input[name="username"]');
         if (usernameInput) usernameInput.required = isSignup;
         if (authEmailInput) {
-          authEmailInput.required = !isSignup;
-          authEmailInput.placeholder = isSignup ? 'Optional for guest accounts' : 'you@example.com';
+          authEmailInput.required = true;
+          authEmailInput.placeholder = 'you@example.com';
         }
         if (profileEmailInput) {
           profileEmailInput.required = false;
@@ -164,51 +162,21 @@
         toggleLink.textContent = isSignup ? 'Already have an account? Sign in' : 'Need an account? Sign up';
       }
 
-      function getStoredUsers() {
-        try {
-          const raw = localStorage.getItem(STORAGE_KEY);
-          return raw ? JSON.parse(raw) : [];
-        } catch (error) {
-          return [];
-        }
-      }
-
-      function saveStoredUsers(users) {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(users));
-      }
-
       function normalizeUser(user) {
         const normalized = user || {};
+        const metadata = normalized.user_metadata || {};
         return {
-          id: normalized.id || `local-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-          username: String(normalized.username || '').trim() || 'CosmixUser',
+          id: normalized.id || '',
+          username: String(metadata.username || normalized.username || '').trim() || normalized.email?.split('@')[0] || 'CosmixUser',
           email: String(normalized.email || '').trim().toLowerCase(),
-          password: String(normalized.password || ''),
-          avatar: normalized.avatar || '',
-          deleteRequested: Boolean(normalized.deleteRequested),
-          deleteReason: normalized.deleteReason || '',
+          avatar: metadata.avatar || '',
+          deleteRequested: Boolean(metadata.deleteRequested),
+          deleteReason: metadata.deleteReason || '',
         };
       }
 
       function getCurrentUser() {
-        try {
-          const raw = localStorage.getItem(CURRENT_USER_KEY);
-          return raw ? normalizeUser(JSON.parse(raw)) : null;
-        } catch (error) {
-          return null;
-        }
-      }
-
-      function saveCurrentUser(user) {
-        localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(normalizeUser(user)));
-      }
-
-      function clearCurrentUser() {
-        localStorage.removeItem(CURRENT_USER_KEY);
-      }
-
-      function createUserId() {
-        return `local-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+        return window.getCurrentUser?.() || null;
       }
 
       function getErrorMessage(result, fallback) {
@@ -291,7 +259,7 @@
           deleteRequestButton.textContent = currentUser.deleteRequested ? 'Deletion request saved' : 'Request account deletion';
         }
         if (deleteRequestStatus) {
-          deleteRequestStatus.textContent = currentUser.deleteRequested ? 'Deletion request saved locally.' : '';
+          deleteRequestStatus.textContent = currentUser.deleteRequested ? 'Deletion request saved to your account.' : '';
         }
         await updateAuthControls();
       }
@@ -305,35 +273,30 @@
         const username = String(formData.get('username') || '').trim();
 
         try {
-          const isSignup = authMode.value === 'signup';
-          const users = getStoredUsers();
-
-          if (isSignup) {
-            const normalizedEmail = email || `${Date.now()}@guest.cosmixmc.local`;
-            if (users.some((user) => (user.email || '').toLowerCase() === normalizedEmail)) {
-              throw new Error('An account with that email already exists locally.');
-            }
-
-            const newUser = normalizeUser({
-              id: createUserId(),
-              username: username || `CosmixUser${Math.random().toString(36).slice(2, 6)}`,
-              email: normalizedEmail,
-              password,
-            });
-            users.push(newUser);
-            saveStoredUsers(users);
-            saveCurrentUser(newUser);
-            authStatus.textContent = 'Account created locally.';
-          } else {
-            const matchingUser = users.find((user) => (user.email || '').toLowerCase() === email);
-            if (!matchingUser || String(matchingUser.password || '') !== password) {
-              throw new Error('No matching account was found. Please sign up first.');
-            }
-            saveCurrentUser(matchingUser);
-            authStatus.textContent = 'Signed in locally.';
+          const authReady = await window.SupabaseAuthReady;
+          if (!authReady || !window.SupabaseAuth) {
+            throw new Error('Supabase Auth is unavailable. Please try again later.');
           }
 
-          await loadProfile();
+          const isSignup = authMode.value === 'signup';
+          if (isSignup) {
+            if (!email || !username || !password) {
+              throw new Error('Email, username, and password are required.');
+            }
+
+            const { user, session } = await window.SupabaseAuth.signUp(email, password, { username });
+            if (session && user) {
+              window.setCurrentUser(user);
+              await loadProfile();
+            } else {
+              authForm.querySelector('input[name="password"]').value = '';
+              authStatus.textContent = 'Account created in Supabase. Check your email to confirm it before signing in.';
+            }
+          } else {
+            const { user } = await window.SupabaseAuth.signIn(email, password);
+            window.setCurrentUser(user);
+            await loadProfile();
+          }
         } catch (error) {
           authStatus.textContent = formatResponseError(getErrorMessage(error, 'Unable to complete that request.'), 'Unable to complete that request.');
         }
@@ -349,34 +312,37 @@
         }
 
         try {
+          const authReady = await window.SupabaseAuthReady;
+          if (!authReady || !window.SupabaseAuth) {
+            throw new Error('Supabase Auth is unavailable. Please try again later.');
+          }
+
           const formData = new FormData(profileForm);
           const username = String(formData.get('username') || '').trim() || currentUser.username;
           const email = String(formData.get('email') || '').trim().toLowerCase();
           const password = String(formData.get('password') || '').trim();
           const avatarFile = formData.get('avatar');
-          const users = getStoredUsers();
-          const duplicate = users.find((user) => user.id !== currentUser.id && (user.email || '').toLowerCase() === email);
-          if (email && duplicate) {
-            throw new Error('That email is already in use locally.');
-          }
-
-          let avatar = currentUser.avatar || '';
+          const authUser = await window.SupabaseAuth.getUser();
+          const metadata = authUser.user_metadata || {};
+          let avatar = metadata.avatar || '';
           if (avatarFile && typeof avatarFile !== 'string' && avatarFile.size) {
+            if (avatarFile.size > 300000) {
+              throw new Error('Choose a profile picture smaller than 300 KB.');
+            }
             avatar = await readFileAsDataUrl(avatarFile);
           }
 
-          const updatedUser = normalizeUser({
-            ...currentUser,
-            username,
-            email,
-            password: password || currentUser.password || '',
-            avatar,
-          });
+          const updates = {
+            data: { ...metadata, username, avatar },
+          };
+          if (email && email !== authUser.email) updates.email = email;
+          if (password) updates.password = password;
 
-          const updatedUsers = users.map((user) => (user.id === currentUser.id ? updatedUser : user));
-          saveStoredUsers(updatedUsers);
-          saveCurrentUser(updatedUser);
-          profileStatus.textContent = 'Profile updated locally.';
+          const { user } = await window.SupabaseAuth.updateUser(updates);
+          window.setCurrentUser(user);
+          profileStatus.textContent = email !== authUser.email
+            ? 'Profile saved. Confirm your new email using the message Supabase sent.'
+            : 'Profile updated in Supabase.';
           await loadProfile();
         } catch (error) {
           profileStatus.textContent = formatResponseError(getErrorMessage(error, 'Unable to save the profile.'), 'Unable to save the profile.');
@@ -401,25 +367,27 @@
             return;
           }
 
-          const users = getStoredUsers();
-          const updatedUser = normalizeUser({
-            ...currentUser,
-            deleteRequested: true,
-            deleteReason: reason.trim(),
-          });
-          saveStoredUsers(users.map((user) => (user.id === currentUser.id ? updatedUser : user)));
-          saveCurrentUser(updatedUser);
-
           try {
+            const authReady = await window.SupabaseAuthReady;
+            if (!authReady || !window.SupabaseAuth) {
+              throw new Error('Supabase Auth is unavailable. Please try again later.');
+            }
+            const authUser = await window.SupabaseAuth.getUser();
+            const metadata = authUser.user_metadata || {};
+            const { user } = await window.SupabaseAuth.updateUser({
+              data: { ...metadata, deleteRequested: true, deleteReason: reason.trim() },
+            });
+            const updatedUser = normalizeUser(user);
+            window.setCurrentUser(user);
             await sendDeletionRequestToDiscord(updatedUser, reason.trim());
             deleteRequestButton.disabled = true;
             deleteRequestButton.textContent = 'Deletion request saved';
             if (deleteRequestStatus) {
-              deleteRequestStatus.textContent = 'Deletion request saved.';
+              deleteRequestStatus.textContent = 'Deletion request saved to Supabase.';
             }
           } catch (error) {
             if (deleteRequestStatus) {
-              deleteRequestStatus.textContent = 'Deletion request saved locally.';
+              deleteRequestStatus.textContent = formatResponseError(error.message, 'Unable to save your deletion request.');
             }
           }
         });
@@ -431,33 +399,17 @@
       });
 
       async function updateAuthControls() {
-        const container = document.getElementById('auth-controls');
-        if (!container) return;
-        const currentUser = getCurrentUser();
-        if (currentUser) {
-          const roles = Array.isArray(currentUser.roles) ? currentUser.roles : [];
-          const isOwner = roles.includes('owner') || currentUser.role === 'owner';
-          const isStaff = isOwner || currentUser.role === 'staff' || currentUser.role === 'admin' || roles.includes('staff') || roles.includes('admin');
-          const extraLinks = isStaff
-            ? '<a class="button secondary small" href="staff.html">Staff</a><a class="button secondary small" href="reports.html">Reports</a>'
-            : '';
-          const ownerUsersLink = isOwner ? '<a class="button secondary small" href="owner-users">Owner users</a>' : '';
-          container.innerHTML = `<a class="button secondary small" href="/profile">${currentUser.username || 'Profile'}</a>${extraLinks}${ownerUsersLink}<button class="button secondary small" id="signout-button" type="button">Sign out</button>`;
-          const signoutButton = document.getElementById('signout-button');
-          if (signoutButton) {
-            signoutButton.addEventListener('click', async () => {
-              clearCurrentUser();
-              await updateAuthControls();
-              await loadProfile();
-            });
-          }
-        } else {
-          container.innerHTML = `<a class="button secondary small" href="/profile">Sign in</a><a class="button secondary small" href="/profile.html?view=signup">Sign up</a>`;
-        }
+        window.renderAuthControls?.();
       }
 
-      updateAuthControls();
-      loadProfile();
+      window.addEventListener('cosmix-auth-state-changed', loadProfile);
+      window.SupabaseAuthReady.then((ready) => {
+        if (ready) {
+          loadProfile();
+        } else {
+          authStatus.textContent = 'Supabase Auth could not initialize. Check the project configuration and reload.';
+        }
+      });
     </script>
   </body>
 </html>

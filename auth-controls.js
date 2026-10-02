@@ -1,80 +1,42 @@
 (function () {
-  const STORAGE_KEY = 'cosmix-profile-users';
   const CURRENT_USER_KEY = 'cosmix-profile-current-user';
-  const SUPABASE_SESSION_KEY = 'cosmix-supabase-session';
+  let currentUser = null;
 
   function normalizeUser(user) {
     const normalized = user || {};
+    const metadata = normalized.user_metadata || {};
+    const appMetadata = normalized.app_metadata || {};
     return {
       id: normalized.id || '',
-      username: String(normalized.username || '').trim() || 'Profile',
+      username: String(metadata.username || normalized.username || '').trim() || normalized.email?.split('@')[0] || 'Profile',
       email: String(normalized.email || '').trim().toLowerCase(),
-      password: String(normalized.password || ''),
-      avatar: normalized.avatar || '',
-      role: normalized.role || 'member',
-      roles: Array.isArray(normalized.roles) ? normalized.roles : [],
-      permissions: Array.isArray(normalized.permissions) ? normalized.permissions : [],
-      deleteRequested: Boolean(normalized.deleteRequested),
-      deleteReason: normalized.deleteReason || '',
+      avatar: metadata.avatar || '',
+      role: appMetadata.role || 'member',
+      roles: Array.isArray(appMetadata.roles) ? appMetadata.roles : [],
+      permissions: Array.isArray(appMetadata.permissions) ? appMetadata.permissions : [],
+      deleteRequested: Boolean(metadata.deleteRequested),
+      deleteReason: metadata.deleteReason || '',
     };
   }
 
-  // Get current user from Supabase session or fallback to localStorage
   function getCurrentUser() {
-    try {
-      // First try Supabase session
-      const supabaseSession = localStorage.getItem(SUPABASE_SESSION_KEY);
-      if (supabaseSession) {
-        const session = JSON.parse(supabaseSession);
-        if (session && session.user) {
-          return normalizeUser({
-            id: session.user.id,
-            email: session.user.email,
-            username: session.user.user_metadata?.username || session.user.email?.split('@')[0] || 'User',
-            avatar: session.user.user_metadata?.avatar || '',
-            role: session.user.user_metadata?.role || 'member',
-            roles: session.user.user_metadata?.roles || [],
-            permissions: session.user.user_metadata?.permissions || [],
-          });
-        }
-      }
-
-      // Fallback to localStorage user
-      const raw = localStorage.getItem(CURRENT_USER_KEY);
-      return raw ? normalizeUser(JSON.parse(raw)) : null;
-    } catch (error) {
-      return null;
-    }
+    return currentUser;
   }
 
   function clearCurrentUser() {
+    currentUser = null;
     localStorage.removeItem(CURRENT_USER_KEY);
-    localStorage.removeItem(SUPABASE_SESSION_KEY);
+    window.dispatchEvent(new CustomEvent('cosmix-auth-state-changed'));
   }
 
-  function setCurrentUser(user) {
+  function setCurrentUser(user, notify = true) {
     if (user) {
-      localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(normalizeUser(user)));
-      // If Supabase session exists, also store it
-      if (window.SupabaseAuth) {
-        window.SupabaseAuth.getSession().then(session => {
-          if (session) {
-            localStorage.setItem(SUPABASE_SESSION_KEY, JSON.stringify(session));
-          }
-        }).catch(err => console.error('Error storing Supabase session:', err));
-      }
+      currentUser = normalizeUser(user);
+      localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(currentUser));
     } else {
       clearCurrentUser();
     }
-  }
-
-  function getStoredUsers() {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      return raw ? JSON.parse(raw) : [];
-    } catch (error) {
-      return [];
-    }
+    if (notify) window.dispatchEvent(new CustomEvent('cosmix-auth-state-changed'));
   }
 
   function renderAuthControls() {
@@ -95,13 +57,14 @@
         container.innerHTML = `<a class="button secondary small" href="/profile.html">${currentUser.username || 'Profile'}</a>${extraLinks}${ownerUsersLink}<button class="button secondary small" id="signout-button" type="button">Sign out</button>`;
         const signoutButton = container.querySelector('#signout-button');
         if (signoutButton) {
-          signoutButton.addEventListener('click', () => {
-            // Sign out from Supabase if available
-            if (window.SupabaseAuth) {
-              window.SupabaseAuth.signOut().catch(err => console.error('Error signing out:', err));
+          signoutButton.addEventListener('click', async () => {
+            signoutButton.disabled = true;
+            try {
+              await window.SupabaseAuth.signOut();
+            } catch (error) {
+              console.error('Error signing out:', error);
+              signoutButton.disabled = false;
             }
-            clearCurrentUser();
-            renderAuthControls();
           });
         }
       } else {
@@ -112,33 +75,42 @@
     });
   }
 
-  // Listen to Supabase auth state changes
-  function setupSupabaseAuthListener() {
-    if (window.SupabaseAuth && window.SupabaseAuth.onAuthStateChange) {
-      window.SupabaseAuth.onAuthStateChange((event, session) => {
-        if (session && session.user) {
-          setCurrentUser(session.user);
-          renderAuthControls();
-        } else {
-          clearCurrentUser();
-          renderAuthControls();
-        }
-      });
-    }
+  function loadScript(source) {
+    return new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = source;
+      script.onload = resolve;
+      script.onerror = () => reject(new Error(`Unable to load ${source}`));
+      document.head.appendChild(script);
+    });
+  }
+
+  async function initializeSupabaseAuth() {
+    await loadScript('/supabase-public-config.js');
+    await loadScript('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.0/dist/umd/supabase.js');
+    await loadScript('/supabase-client.js');
+
+    window.SupabaseAuth.onAuthStateChange((event, session) => {
+      setCurrentUser(session?.user || null, event !== 'TOKEN_REFRESHED');
+      renderAuthControls();
+    });
+
+    const session = await window.SupabaseAuth.getSession();
+    setCurrentUser(session?.user || null);
+    renderAuthControls();
+    return true;
   }
 
   window.renderAuthControls = renderAuthControls;
   window.setCurrentUser = setCurrentUser;
   window.getCurrentUser = getCurrentUser;
   window.clearCurrentUser = clearCurrentUser;
-
-  window.addEventListener('load', () => {
+  window.setCurrentUser = setCurrentUser;
+  window.renderAuthControls = renderAuthControls;
+  window.SupabaseAuthReady = initializeSupabaseAuth().catch((error) => {
+    console.error('Supabase authentication could not start:', error);
     renderAuthControls();
-    setupSupabaseAuthListener();
+    return false;
   });
-  window.addEventListener('storage', renderAuthControls);
-  document.addEventListener('DOMContentLoaded', () => {
-    renderAuthControls();
-    setupSupabaseAuthListener();
-  });
+  renderAuthControls();
 })();
