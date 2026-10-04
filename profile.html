@@ -175,7 +175,7 @@
         };
       }
 
-      function getCurrentUser() {
+      function getProfileCurrentUser() {
         return window.getCurrentUser?.() || null;
       }
 
@@ -234,7 +234,7 @@
       }
 
       async function loadProfile() {
-        const currentUser = getCurrentUser();
+        const currentUser = getProfileCurrentUser();
         if (!currentUser) {
           profileCard.style.display = 'none';
           authCard.style.display = 'block';
@@ -305,7 +305,7 @@
       profileForm.addEventListener('submit', async (event) => {
         event.preventDefault();
         profileStatus.textContent = 'Saving profile...';
-        const currentUser = getCurrentUser();
+        const currentUser = getProfileCurrentUser();
         if (!currentUser) {
           profileStatus.textContent = 'Please sign in first.';
           return;
@@ -359,7 +359,7 @@
             return;
           }
 
-          const currentUser = getCurrentUser();
+          const currentUser = getProfileCurrentUser();
           if (!currentUser) {
             if (deleteRequestStatus) {
               deleteRequestStatus.textContent = 'Please sign in first.';
