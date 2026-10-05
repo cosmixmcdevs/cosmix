@@ -129,7 +129,7 @@
 
         try {
           if (!supabaseConfig.url || !supabaseConfig.anonKey) {
-            throw new Error('AI chat needs a Supabase project URL and anon key in supabase-public-config.js.');
+            throw new Error('API error; report this to the maintainer of the model "Voidhaven 8.24 BETA" ');
           }
 
           const response = await fetch(`${supabaseConfig.url.replace(/\/$/, '')}/functions/v1/ai-chat`, {
