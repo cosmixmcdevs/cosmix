@@ -1,9 +1,10 @@
+<!-- noprotect -->
 <!DOCTYPE html>
-<html>
-  <head>
+<html lang="en">
+<head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cosmix Web Server Is Booting...</title>
+    <title>Cosmix Web Server - Initialization Console</title>
     <style>
         * {
             box-sizing: border-box;
@@ -12,244 +13,268 @@
         }
 
         body {
-            background-color: #05050d;
-            color: #4af626; /* Space/matrix green */
-            font-family: 'Courier New', Courier, monospace;
-            padding: 20px;
+            background-color: #0c0d12;
+            color: #d1d5db;
+            font-family: 'Consolas', 'Courier New', monospace;
+            padding: 24px;
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            overflow: hidden;
         }
 
-        /* CRT Screen Effect overlay */
-        body::after {
-            content: " ";
-            display: block;
-            position: fixed;
-            top: 0; left: 0; bottom: 0; right: 0;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
-            z-index: 2;
-            background-size: 100% 4px, 3px 100%;
-            pointer-events: none;
-        }
-
-        .console-container {
+        .terminal {
             width: 100%;
-            max-width: 800px;
-            background: rgba(10, 10, 25, 0.95);
-            border: 1px solid #1a3a60;
-            box-shadow: 0 0 20px rgba(0, 162, 255, 0.2);
-            border-radius: 6px;
-            padding: 20px;
-            height: 500px;
+            max-width: 850px;
+            background: #111827;
+            border: 1px solid #374151;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            border-radius: 8px;
+            overflow: hidden;
             display: flex;
             flex-direction: column;
-            justify-content: flex-start;
-            position: relative;
+            height: 570px;
         }
 
-        .console-log-area {
+        .terminal-header {
+            background: #1f2937;
+            padding: 10px 16px;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid #374151;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 6px;
+            margin-right: 16px;
+        }
+
+        .dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+        .dot-red { background: #ef4444; }
+        .dot-yellow { background: #f59e0b; }
+        .dot-green { background: #10b981; }
+
+        .title {
+            color: #9ca3af;
+            font-size: 13px;
+        }
+
+        .console-body {
             flex-grow: 1;
+            padding: 18px;
             overflow-y: auto;
-            margin-bottom: 10px;
-            padding-right: 5px;
+            font-size: 14px;
+            line-height: 1.6;
         }
 
-        /* Hide scrollbars but preserve functionality */
-        .console-log-area::-webkit-scrollbar {
-            width: 4px;
+        .console-body::-webkit-scrollbar {
+            width: 6px;
         }
-        .console-log-area::-webkit-scrollbar-thumb {
-            background: #1a3a60;
-            border-radius: 2px;
+        .console-body::-webkit-scrollbar-thumb {
+            background: #4b5563;
+            border-radius: 3px;
         }
 
         .line {
-            line-height: 1.5;
-            margin-bottom: 6px;
             white-space: pre-wrap;
+            margin-bottom: 2px;
         }
 
-        /* Cosmic Colors */
-        .system { color: #8a2be2; } /* Purple */
-        .info { color: #00bfff; }   /* Cyan */
-        .warn { color: #ffaa00; }   /* Orange */
-        .success { color: #39ff14; font-weight: bold; } /* Neon Green */
-        .dim { color: #555577; }
+        .cyan { color: #22d3ee; }
+        .green { color: #4ade80; }
+        .yellow { color: #fbbf24; }
+        .magenta { color: #f472b6; }
+        .dim { color: #6b7280; }
+        .white { color: #ffffff; }
 
-        /* Fake Progress Bar Styling */
-        .progress-container {
+        .progress-track {
             display: inline-block;
-            width: 200px;
-            background: #111122;
-            border: 1px solid #1a3a60;
-            height: 14px;
+            width: 150px;
+            background: #374151;
+            border-radius: 3px;
+            height: 10px;
             vertical-align: middle;
             margin: 0 10px;
-            position: relative;
+            overflow: hidden;
         }
 
-        .progress-bar {
+        .progress-fill {
             height: 100%;
             width: 0%;
-            background: #00bfff;
-            box-shadow: 0 0 8px #00bfff;
-            transition: width 0.1s linear;
+            background: #22d3ee;
+            transition: width 0.05s linear;
         }
 
-        /* Pulsing cursor element */
-        .cursor {
-            display: inline-block;
-            width: 8px;
-            height: 15px;
-            background: #4af626;
-            animation: blink 0.8s infinite;
-            vertical-align: middle;
-            margin-left: 4px;
+        .input-prompt-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 4px;
         }
 
-        @keyframes blink {
-            0%, 49% { opacity: 1; }
-            50%, 100% { opacity: 0; }
+        .prompt-label {
+            color: #4ade80;
+            font-weight: bold;
+            white-space: nowrap;
         }
 
-        /* Glowing success box */
-        .online-banner {
-            border: 2px dashed #39ff14;
-            padding: 15px;
-            margin-top: 15px;
-            text-align: center;
-            background: rgba(57, 255, 20, 0.05);
-            box-shadow: inset 0 0 15px rgba(57, 255, 20, 0.1);
-            animation: pulse 2s infinite ease-in-out;
-        }
-
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.01); box-shadow: inset 0 0 20px rgba(57, 255, 20, 0.2); }
+        .cmd-input {
+            flex-grow: 1;
+            background: transparent;
+            border: none;
+            outline: none;
+            color: #ffffff;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 14px;
+            padding: 0;
         }
     </style>
 </head>
 <body>
 
-    <div class="console-container">
-        <div class="console-log-area" id="consoleLog">
-            <!-- Animated logs will injection here -->
+    <div class="terminal">
+        <div class="terminal-header">
+            <div class="buttons">
+                <div class="dot dot-red"></div>
+                <div class="dot dot-yellow"></div>
+                <div class="dot dot-green"></div>
+            </div>
+            <div class="title">node server.js — cosmix-web-server — 127.0.0.1</div>
         </div>
+        <div class="console-body" id="console"></div>
     </div>
-
     <script>
-        const consoleLog = document.getElementById('consoleLog');
+        const output = document.getElementById('console');
         const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
-        // Appends a fast text line instantly or row by row
-        function appendLine(text, className = '') {
+        function log(text) {
             const div = document.createElement('div');
-            div.className = `line ${className}`;
+            div.className = 'line';
             div.innerHTML = text;
-            consoleLog.appendChild(div);
-            consoleLog.scrollTop = consoleLog.scrollHeight; // Auto-scroll
+            output.appendChild(div);
+            output.scrollTop = output.scrollHeight;
             return div;
         }
 
-        // Simulates realistic typing character-by-character
-        async function typeLine(text, className = '', delay = 25) {
+        async function logProgressBar(taskName, duration = 1000) {
             const div = document.createElement('div');
-            div.className = `line ${className}`;
-            consoleLog.appendChild(div);
-            
-            for (let i = 0; i < text.length; i++) {
-                div.innerHTML += text[i];
-                consoleLog.scrollTop = consoleLog.scrollHeight;
-                await sleep(delay);
+            div.className = 'line';
+            div.innerHTML = `<span class="cyan">[INFO]</span> ${taskName} <div class="progress-track"><div class="progress-fill"></div></div> <span class="pct dim">0%</span>`;
+            output.appendChild(div);
+
+            const fill = div.querySelector('.progress-fill');
+            const pct = div.querySelector('.pct');
+            const steps = 10;
+
+            for(let i = 1; i <= steps; i++) {
+                await sleep(duration / steps);
+                const percent = (i / steps) * 100;
+                fill.style.width = `${percent}%`;
+                pct.innerText = `${percent}%`;
+                output.scrollTop = output.scrollHeight;
             }
-            await sleep(150); // Pause slightly after completing a line
+            pct.className = 'green';
+            pct.innerText = 'OK';
         }
 
-        // Creates a working CSS loading bar directly inside the log stream
-        async function runLoadingBar(label, duration = 1500) {
-            const container = document.createElement('div');
-            container.className = 'line info';
-            container.innerHTML = `${label} <div class="progress-container"><div class="progress-bar"></div></div> <span class="pct">0%</span>`;
-            consoleLog.appendChild(container);
-            
-            const bar = container.querySelector('.progress-bar');
-            const pctText = container.querySelector('.pct');
-            
-            const steps = 20;
-            const stepDuration = duration / steps;
-            
-            for (let i = 1; i <= steps; i++) {
-                const percentage = Math.round((i / steps) * 100);
-                bar.style.width = `${percentage}%`;
-                pctText.innerText = `${percentage}%`;
-                consoleLog.scrollTop = consoleLog.scrollHeight;
-                await sleep(stepDuration);
-            }
-            
-            container.innerHTML += ' <span class="success">[READY]</span>';
-            consoleLog.scrollTop = consoleLog.scrollHeight;
-            await sleep(200);
-        }
-
-        // Main animation control function
-        async function startBootSequence() {
-            // Add a flashing cursor line to start
-            const cursorLine = document.createElement('div');
-            cursorLine.innerHTML = '<span class="cursor"></span>';
-            consoleLog.appendChild(cursorLine);
-
-            await sleep(800);
-            cursorLine.remove(); // Remove initial blank cursor
-
-            // Phase 1: Core System Initialization
-            await typeLine('🚀 INITIALIZING COSMIC WEB SERVER Core v4.0.0...', 'system', 40);
+        async function bootSequence() {
+            log(`<span class="dim">$ npm run start</span>`);
             await sleep(400);
-            appendLine('🔄 Checking local wormhole network structures...', 'dim');
+            log(`\n> cosmix-web-server@4.0.0 start\n> node dist/server.js\n`);
             await sleep(600);
-            appendLine('✔ Warp core status: NOMINAL', 'success');
+
+            log(`<span class="cyan">[INFO]</span> <span class="white">Initializing Cosmix Engine architecture...</span>`);
+            await sleep(350);
+            log(`<span class="cyan">[INFO]</span> Loading configuration: <span class="magenta">.env.production</span>`);
+            await sleep(250);
+            log(`<span class="dim">[DEBUG] NODE_ENV=production</span>`);
+            log(`<span class="dim">[DEBUG] PORT=8080</span>`);
+            log(`<span class="dim">[DEBUG] COMPRESSION=enabled</span>`);
+            await sleep(400);
+
+            log(`<span class="cyan">[INFO]</span> Verifying core dependency ecosystem...`);
+            await logProgressBar('Building module graph cache', 800);
+            await logProgressBar('Compiling TypeScript schemas ', 1200);
             await sleep(300);
-            
-            // Phase 2: Simulating errors and diagnostics
-            await typeLine('📡 Pinging remote Nebula Proxies...', 'info');
+
+            log(`<span class="cyan">[INFO]</span> Connecting to persistence layers...`);
             await sleep(500);
-            appendLine('❌ Proxy Connection Time Out (Sector 404: Unreachable)', 'warn');
-            await sleep(700);
-            await typeLine('🔄 Rerouting core handshake protocols through Dark Matter tunnels...', 'info', 20);
-            await sleep(1000);
-            appendLine('✔ Secure tunnel successfully built. Encrypted link established.', 'success');
-            
-            appendLine('<br>'); // Blank space
+            log(`<span class="green">[OK]</span>   Database pool connected successfully to cluster <span class="dim">(replica-set-0)</span>`);
+            await sleep(250);
+            log(`<span class="green">[OK]</span>   Redis cache engine linked on port 6379`);
+            await sleep(400);
 
-            // Phase 3: Loading Bars
-            await runLoadingBar('🌌 Syncing Interstellar Star-Maps   ', 1200);
-            await runLoadingBar('🛸 Priming Anti-Gravity Middleware  ', 1800);
-            await runLoadingBar('🛡️ Compiling Quantum Firewall Shields', 1000);
-            
-            await sleep(600);
+            log(`<span class="cyan">[INFO]</span> Mapping application server routing context tree...`);
+            await sleep(300);
+            log(`<span class="dim">  ➔ GET    /api/v1/health          [Anonymous]</span>`);
+            await sleep(100);
+            log(`<span class="dim">  ➔ GET    /api/v1/telemetry       [Protected]</span>`);
+            await sleep(100);
+            log(`<span class="dim">  ➔ POST   /api/v1/quantum-payload [Protected]</span>`);
+            await sleep(150);
+            log(`<span class="dim">  ➔ WS     /api/v1/stream/orbit     [Upgrade]</span>`);
+            await sleep(400);
+            log(`<span class="green">[OK]</span>   Compiled 24 active middleware controllers.`);
+            await sleep(500);
 
-            // Phase 4: Final Success Banner
-            const finalBanner = appendLine(`
-                <div class="online-banner">
-                    <h2 class="success">🌟 COSMIC WEB SERVER IS LIVE 🌟</h2>
-                    <p style="color: #fff; margin: 10px 0 5px 0;">Network Status: Broadcasting smoothly across dimensions</p>
-                    <p class="info">🛰️ Local Spaceport: <a href="#" style="color: #00bfff; font-weight:bold;">http://localhost:8080</a></p>
-                    <p class="dim" style="font-size: 0.85em; margin-top: 10px;">Press Spacebar or click screen to toggle command log matrix.</p>
-                </div>
-            `);
+            log(`\n<span class="green">✔ [READY] Cosmix HTTP Gateway execution loop initialized.</span>`);
+            log(`<span class="dim">-------------------------------------------------------</span>`);
+            log(`⚡ <span class="white">Server Listening URL:</span> <span class="cyan">http://localhost:8080</span>`);
+            log(`⚡ <span class="white">Process ID (PID):</span>     <span class="magenta">${Math.floor(Math.random() * 90000) + 10000}</span>`);
+            log(`⚡ <span class="white">Cluster Instance:</span>    Worker-01 <span class="dim">(Thread Affinity: Core 0)</span>`);
+            log(`<span class="dim">-------------------------------------------------------</span>\n`);
             
-            // Re-add an ongoing blink cursor at the very bottom
-            const activePrompt = document.createElement('div');
-            activePrompt.className = 'line';
-            activePrompt.innerHTML = 'cosmic-user@nebula-node:~$ <span class="cursor"></span>';
-            consoleLog.appendChild(activePrompt);
-            consoleLog.scrollTop = consoleLog.scrollHeight;
+            log(`<span class="yellow">[NOTICE] To open Web Server, type the command 'cosmix run web'</span>\n`);
+            await sleep(200);
+
+            createInteractivePrompt();
         }
 
-        // Initialize on page load
-        window.addEventListener('DOMContentLoaded', startBootSequence);
+        function createInteractivePrompt() {
+            const container = document.createElement('div');
+            container.className = 'input-prompt-container';
+            container.innerHTML = `
+                <span class="prompt-label">cosmix-server-io></span>
+                <input type="text" class="cmd-input" id="cmdInput" autofocus autocomplete="off" spellcheck="false">
+            `;
+            output.appendChild(container);
+            output.scrollTop = output.scrollHeight;
+
+            const input = document.getElementById('cmdInput');
+            
+            output.addEventListener('click', () => input.focus());
+            input.focus();
+
+            input.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    const command = this.value.trim();
+                    
+                    container.remove();
+                    log(`<span class="green">cosmix-server-io></span> <span class="white">${command}</span>`);
+
+                    if (command === 'cosmix run web') {
+                        log(`<span class="cyan">[INFO]</span> Launching user interface dashboard context...`);
+                        log(`<span class="green">[OK]</span> Redirecting to 'home'...`);
+                        
+                        setTimeout(() => {
+                            window.location.href = 'home'; 
+                        }, 800);
+                    } else if (command === '') {
+                        createInteractivePrompt();
+                    } else {
+                        log(`<span class="magenta">Error:</span> Command "${command}" not recognized. Clear gateway loop.`);
+                        createInteractivePrompt();
+                    }
+                }
+            });
+        }
+
+        window.addEventListener('DOMContentLoaded', bootSequence);
     </script>
 </body>
 </html>
