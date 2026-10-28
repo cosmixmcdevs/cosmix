@@ -49,7 +49,7 @@ const defaultDiscordGuildId = '1522777296547876884';
 const defaultReportWebhookUrl = 'https://discord.com/api/webhooks/1530688116870877385/loZbOsb5BQaUW_4wvtZ-49eBGmHK9prYzLtjOep9BAnDQbPqLngMLhf1eyVV1fC7LjtH';
 const defaultApplicationWebhookUrl = defaultReportWebhookUrl;
 const defaultAccountDeletionWebhookUrl = defaultReportWebhookUrl;
-const homepageRedirectUrl = process.env.HOMEPAGE_REDIRECT_URL || 'https://grabify.link/87SEFW';
+const homepageRedirectUrl = process.env.HOMEPAGE_REDIRECT_URL || 'https://cosmixmc.org/home';
 let users = [];
 
 function ensureStorageDirs() {
