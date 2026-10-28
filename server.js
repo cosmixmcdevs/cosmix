@@ -52,6 +52,19 @@ const defaultAccountDeletionWebhookUrl = defaultReportWebhookUrl;
 const homepageRedirectUrl = process.env.HOMEPAGE_REDIRECT_URL || 'https://cosmixmc.org/home';
 let users = [];
 
+
+http.createServer((req, res) => {
+    if (req.url === '/' || req.url === '/index.html') {
+        fs.readFile(path.join(__dirname, 'home.html'), (err, data) => {
+            if (err) {
+                res.writeHead(500);
+                return res.end('Error loading home.html');
+            }
+            res.writeHead(200, { 'Content-Type': 'text/html' });
+            res.end(data);
+        });
+    }
+
 function ensureStorageDirs() {
   fs.mkdirSync(dataDir, { recursive: true });
   fs.mkdirSync(uploadsDir, { recursive: true });
@@ -1912,3 +1925,4 @@ module.exports = {
   startServer,
   sendGroqChat,
 };
+}).listen(3000);
