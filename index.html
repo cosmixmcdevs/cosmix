@@ -224,7 +224,7 @@
 
             log(`\n<span class="green">✔ [READY] Cosmix HTTP Gateway execution loop initialized.</span>`);
             log(`<span class="dim">-------------------------------------------------------</span>`);
-            log(`⚡ <span class="white">Server Listening URL:</span> <span class="cyan">http://localhost:8080</span>`);
+            log(`⚡ <span class="white">Server Listening URL:</span> <span class="cyan">https://cosmixmc.org:8080</span>`);
             log(`⚡ <span class="white">Process ID (PID):</span>     <span class="magenta">${Math.floor(Math.random() * 90000) + 10000}</span>`);
             log(`⚡ <span class="white">Cluster Instance:</span>    Worker-01 <span class="dim">(Thread Affinity: Core 0)</span>`);
             log(`<span class="dim">-------------------------------------------------------</span>\n`);
@@ -239,7 +239,7 @@
             const container = document.createElement('div');
             container.className = 'input-prompt-container';
             container.innerHTML = `
-                <span class="prompt-label">cosmix-server-io></span>
+                <span class="prompt-label">user></span>
                 <input type="text" class="cmd-input" id="cmdInput" autofocus autocomplete="off" spellcheck="false">
             `;
             output.appendChild(container);
