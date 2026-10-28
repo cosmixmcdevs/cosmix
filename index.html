@@ -2,20 +2,255 @@
 <html>
   <head>
     <meta http-equiv="refresh" content="0; url=home" />
-    <title>Loading...</title>
-    <meta
-      name="description"
-      content="CosmixMC is a new and upcoming Minecraft server with exciting ranks, helpful staff, and an easy report system, via our website!"
-    />
-    <link rel="canonical" href="https://symmetrical-spoon-7vq6g5qqq64p3rp67-3004.app.github.dev/home" />
-    <meta property="og:url" content="https://symmetrical-spoon-7vq6g5qqq64p3rp67-3004.app.github.dev/home" />
-    <meta property="twitter:url" content="https://symmetrical-spoon-7vq6g5qqq64p3rp67-3004.app.github.dev/home" />
-    <link rel="icon" href="https://cdn.discordapp.com/icons/1522777296547876884/069300e28d2be308f1c088860d7598c4.webp?size=1024" />
-    <meta property="og:image" content="https://cdn.discordapp.com/icons/1522777296547876884/069300e28d2be308f1c088860d7598c4.webp?size=1024" />
-    <meta property="twitter:image" content="https://cdn.discordapp.com/icons/1522777296547876884/069300e28d2be308f1c088860d7598c4.webp?size=1024" />
-    <link rel="stylesheet" href="styles.css" />
-  </head>
-  <body>
-    <p>Loading server...</p>
-  </body>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cosmix Web Server Boot Sequence</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: #05050d;
+            color: #4af626; /* Space/matrix green */
+            font-family: 'Courier New', Courier, monospace;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        /* CRT Screen Effect overlay */
+        body::after {
+            content: " ";
+            display: block;
+            position: fixed;
+            top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            z-index: 2;
+            background-size: 100% 4px, 3px 100%;
+            pointer-events: none;
+        }
+
+        .console-container {
+            width: 100%;
+            max-width: 800px;
+            background: rgba(10, 10, 25, 0.95);
+            border: 1px solid #1a3a60;
+            box-shadow: 0 0 20px rgba(0, 162, 255, 0.2);
+            border-radius: 6px;
+            padding: 20px;
+            height: 500px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            position: relative;
+        }
+
+        .console-log-area {
+            flex-grow: 1;
+            overflow-y: auto;
+            margin-bottom: 10px;
+            padding-right: 5px;
+        }
+
+        /* Hide scrollbars but preserve functionality */
+        .console-log-area::-webkit-scrollbar {
+            width: 4px;
+        }
+        .console-log-area::-webkit-scrollbar-thumb {
+            background: #1a3a60;
+            border-radius: 2px;
+        }
+
+        .line {
+            line-height: 1.5;
+            margin-bottom: 6px;
+            white-space: pre-wrap;
+        }
+
+        /* Cosmic Colors */
+        .system { color: #8a2be2; } /* Purple */
+        .info { color: #00bfff; }   /* Cyan */
+        .warn { color: #ffaa00; }   /* Orange */
+        .success { color: #39ff14; font-weight: bold; } /* Neon Green */
+        .dim { color: #555577; }
+
+        /* Fake Progress Bar Styling */
+        .progress-container {
+            display: inline-block;
+            width: 200px;
+            background: #111122;
+            border: 1px solid #1a3a60;
+            height: 14px;
+            vertical-align: middle;
+            margin: 0 10px;
+            position: relative;
+        }
+
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background: #00bfff;
+            box-shadow: 0 0 8px #00bfff;
+            transition: width 0.1s linear;
+        }
+
+        /* Pulsing cursor element */
+        .cursor {
+            display: inline-block;
+            width: 8px;
+            height: 15px;
+            background: #4af626;
+            animation: blink 0.8s infinite;
+            vertical-align: middle;
+            margin-left: 4px;
+        }
+
+        @keyframes blink {
+            0%, 49% { opacity: 1; }
+            50%, 100% { opacity: 0; }
+        }
+
+        /* Glowing success box */
+        .online-banner {
+            border: 2px dashed #39ff14;
+            padding: 15px;
+            margin-top: 15px;
+            text-align: center;
+            background: rgba(57, 255, 20, 0.05);
+            box-shadow: inset 0 0 15px rgba(57, 255, 20, 0.1);
+            animation: pulse 2s infinite ease-in-out;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.01); box-shadow: inset 0 0 20px rgba(57, 255, 20, 0.2); }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="console-container">
+        <div class="console-log-area" id="consoleLog">
+            <!-- Animated logs will injection here -->
+        </div>
+    </div>
+
+    <script>
+        const consoleLog = document.getElementById('consoleLog');
+        const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+        // Appends a fast text line instantly or row by row
+        function appendLine(text, className = '') {
+            const div = document.createElement('div');
+            div.className = `line ${className}`;
+            div.innerHTML = text;
+            consoleLog.appendChild(div);
+            consoleLog.scrollTop = consoleLog.scrollHeight; // Auto-scroll
+            return div;
+        }
+
+        // Simulates realistic typing character-by-character
+        async function typeLine(text, className = '', delay = 25) {
+            const div = document.createElement('div');
+            div.className = `line ${className}`;
+            consoleLog.appendChild(div);
+            
+            for (let i = 0; i < text.length; i++) {
+                div.innerHTML += text[i];
+                consoleLog.scrollTop = consoleLog.scrollHeight;
+                await sleep(delay);
+            }
+            await sleep(150); // Pause slightly after completing a line
+        }
+
+        // Creates a working CSS loading bar directly inside the log stream
+        async function runLoadingBar(label, duration = 1500) {
+            const container = document.createElement('div');
+            container.className = 'line info';
+            container.innerHTML = `${label} <div class="progress-container"><div class="progress-bar"></div></div> <span class="pct">0%</span>`;
+            consoleLog.appendChild(container);
+            
+            const bar = container.querySelector('.progress-bar');
+            const pctText = container.querySelector('.pct');
+            
+            const steps = 20;
+            const stepDuration = duration / steps;
+            
+            for (let i = 1; i <= steps; i++) {
+                const percentage = Math.round((i / steps) * 100);
+                bar.style.width = `${percentage}%`;
+                pctText.innerText = `${percentage}%`;
+                consoleLog.scrollTop = consoleLog.scrollHeight;
+                await sleep(stepDuration);
+            }
+            
+            container.innerHTML += ' <span class="success">[READY]</span>';
+            consoleLog.scrollTop = consoleLog.scrollHeight;
+            await sleep(200);
+        }
+
+        // Main animation control function
+        async function startBootSequence() {
+            // Add a flashing cursor line to start
+            const cursorLine = document.createElement('div');
+            cursorLine.innerHTML = '<span class="cursor"></span>';
+            consoleLog.appendChild(cursorLine);
+
+            await sleep(800);
+            cursorLine.remove(); // Remove initial blank cursor
+
+            // Phase 1: Core System Initialization
+            await typeLine('🚀 INITIALIZING COSMIC WEB SERVER Core v4.0.0...', 'system', 40);
+            await sleep(400);
+            appendLine('🔄 Checking local wormhole network structures...', 'dim');
+            await sleep(600);
+            appendLine('✔ Warp core status: NOMINAL', 'success');
+            await sleep(300);
+            
+            // Phase 2: Simulating errors and diagnostics
+            await typeLine('📡 Pinging remote Nebula Proxies...', 'info');
+            await sleep(500);
+            appendLine('❌ Proxy Connection Time Out (Sector 404: Unreachable)', 'warn');
+            await sleep(700);
+            await typeLine('🔄 Rerouting core handshake protocols through Dark Matter tunnels...', 'info', 20);
+            await sleep(1000);
+            appendLine('✔ Secure tunnel successfully built. Encrypted link established.', 'success');
+            
+            appendLine('<br>'); // Blank space
+
+            // Phase 3: Loading Bars
+            await runLoadingBar('🌌 Syncing Interstellar Star-Maps   ', 1200);
+            await runLoadingBar('🛸 Priming Anti-Gravity Middleware  ', 1800);
+            await runLoadingBar('🛡️ Compiling Quantum Firewall Shields', 1000);
+            
+            await sleep(600);
+
+            // Phase 4: Final Success Banner
+            const finalBanner = appendLine(`
+                <div class="online-banner">
+                    <h2 class="success">🌟 COSMIC WEB SERVER IS LIVE 🌟</h2>
+                    <p style="color: #fff; margin: 10px 0 5px 0;">Network Status: Broadcasting smoothly across dimensions</p>
+                    <p class="info">🛰️ Local Spaceport: <a href="#" style="color: #00bfff; font-weight:bold;">http://localhost:8080</a></p>
+                    <p class="dim" style="font-size: 0.85em; margin-top: 10px;">Press Spacebar or click screen to toggle command log matrix.</p>
+                </div>
+            `);
+            
+            // Re-add an ongoing blink cursor at the very bottom
+            const activePrompt = document.createElement('div');
+            activePrompt.className = 'line';
+            activePrompt.innerHTML = 'cosmic-user@nebula-node:~$ <span class="cursor"></span>';
+            consoleLog.appendChild(activePrompt);
+            consoleLog.scrollTop = consoleLog.scrollHeight;
+        }
+
+        // Initialize on page load
+        window.addEventListener('DOMContentLoaded', startBootSequence);
+    </script>
+</body>
 </html>
